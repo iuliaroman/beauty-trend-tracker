@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beauty Trend Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f8f6; color: #1a1a1a; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+.header { padding: 1.5rem 0 1rem; border-bottom: 1px solid #e5e3dc; margin-bottom: 1.5rem; }
+.header h1 { font-size: 22px; font-weight: 500; }
+.header p { font-size: 13px; color: #666; margin-top: 4px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 6px 14px; border-radius: 20px; font-size: 13px; border: 1px solid #ddd; cursor: pointer; background: transparent; color: #666; transition: all 0.15s; }
+.tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.tab:hover:not(.active) { background: #f0ede8; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; padding: 1rem 1.25rem; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.card-title { font-size: 15px; font-weight: 500; }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+.badge-hot { background: #FAECE7; color: #993C1D; }
+.badge-rising { background: #EAF3DE; color: #3B6D11; }
+.badge-stable { background: #E6F1FB; color: #185FA5; }
+.badge-new { background: #EEEDFE; color: #534AB7; }
+.sources { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.source-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid #e5e3dc; color: #666; }
+.spark { height: 40px; width: 100%; margin-bottom: 8px; }
+.card-meta { font-size: 12px; color: #999; display: flex; justify-content: space-between; }
+.add-section { background: #f0ede8; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+.add-section h3 { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+.add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.add-row input, .add-row select { flex: 1; min-width: 120px; font-size: 13px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.add-row button { white-space: nowrap; font-size: 13px; padding: 8px 16px; border: 1px solid #ddd; border-radius: 8px; background: #1a1a1a; color: #fff; cursor: pointer; }
+.add-row button:hover { background: #333; }
+.trend-bar { height: 4px; border-radius: 2px; background: #e5e3dc; margin: 6px 0; overflow: hidden; }
+.trend-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.stat-card { background: #f0ede8; border-radius: 8px; padding: 1rem; }
+.stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: 500; }
+.empty { text-align: center; padding: 2rem; color: #999; font-size: 14px; }
+.remove-btn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 18px; padding: 0; line-height: 1; }
+.remove-btn:hover { color: #333; }
+.search-row { margin-bottom: 1rem; }
+.search-row input { width: 100%; font-size: 14px; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.notes-input { width: 100%; font-size: 13px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px; background: #fff; }
+p.hint { font-size: 11px; color: #999; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Beauty trend tracker</h1>
+  <p>Track emerging trends across sources — Google Trends, Reddit, TikTok, Instagram</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-label">Total trends</div><div class="stat-value" id="stat-total">0</div></div>
+  <div class="stat-card"><div class="stat-label">Hot right now</div><div class="stat-value" id="stat-hot">0</div></div>
+  <div class="stat-card"><div class="stat-label">New this week</div><div class="stat-value" id="stat-new">0</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="filterCat('all', this)">All</button>
+  <button class="tab" onclick="filterCat('skincare', this)">Skincare</button>
+  <button class="tab" onclick="filterCat('makeup', this)">Makeup</button>
+  <button class="tab" onclick="filterCat('haircare', this)">Haircare</button>
+  <button class="tab" onclick="filterCat('fragrance', this)">Fragrance</button>
+  <button class="tab" onclick="filterCat('wellness', this)">Wellness</button>
+</div>
+
+<div class="search-row">
+  <input type="text" placeholder="Search trends..." id="search-input" oninput="renderTrends()" />
+</div>
+
+<div class="add-section">
+  <h3>Add a trend</h3>
+  <div class="add-row">
+    <input type="text" id="trend-name" placeholder="Trend name (e.g. skin cycling)" />
+    <select id="trend-cat">
+      <option value="skincare">Skincare</option>
+      <option value="makeup">Makeup</option>
+      <option value="haircare">Haircare</option>
+      <option value="fragrance">Fragrance</option>
+      <option value="wellness">Wellness</option>
+    </select>
+    <select id="trend-status">
+      <option value="rising">Rising</option>
+      <option value="hot">Hot</option>
+      <option value="stable">Stable</option>
+      <option value="new">New</option>
+    </select>
+    <select id="trend-source" multiple style="height: 36px; min-width: 140px;">
+      <option value="Google Trends" selected>Google Trends</option>
+      <option value="TikTok">TikTok</option>
+      <option value="Instagram">Instagram</option>
+      <option value="Reddit">Reddit</option>
+    </select>
+    <button onclick="addTrend()">Add trend</button>
+  </div>
+  <input type="text" class="notes-input" id="trend-notes" placeholder="Notes (optional — data, context, source links...)" />
+  <p class="hint">Hold Ctrl/Cmd to select multiple sources</p>
+</div>
+
+<div class="grid" id="trends-grid"></div>
+
+<script>
+const SEEDS = [
+  { id: 1, name: "Skin cycling", cat: "skincare", status: "hot", sources: ["Google Trends", "TikTok", "Reddit"], score: 87, added: "2 days ago", notes: "4-night routine: retinol, exfoliant, recovery x2. Search volume up 340% YoY." },
+  { id: 2, name: "Personalized skincare", cat: "skincare", status: "rising", sources: ["Google Trends", "Instagram"], score: 74, added: "1 week ago", notes: "Brands like Prose, Curology winning. Market projected at $48B by 2030." },
+  { id: 3, name: "Grunge makeup revival", cat: "makeup", status: "rising", sources: ["TikTok", "Instagram"], score: 68, added: "3 days ago", notes: "Smudged liner, dark shadows. Search for 'grunge makeup' up 21% YoY." },
+  { id: 4, name: "Red light therapy", cat: "wellness", status: "hot", sources: ["Google Trends", "TikTok"], score: 91, added: "Today", notes: "Online searches up 304% end of 2025. Crossing over from clinical to consumer." },
+  { id: 5, name: "Reef-safe SPF", cat: "skincare", status: "new", sources: ["Google Trends", "Reddit"], score: 55, added: "Today", notes: "TikTok searches up 355%. YoY internet searches for 'reef-safe SPF' up 86%." },
+  { id: 6, name: "Yuzu fragrance", cat: "fragrance", status: "new", sources: ["Google Trends", "Instagram"], score: 48, added: "5 days ago", notes: "East Asian citrus taking over from banana/fig scents. Optimistic, fizzy profile." },
+  { id: 7, name: "Scalp care", cat: "haircare", status: "stable", sources: ["Google Trends", "TikTok"], score: 62, added: "1 week ago", notes: "Skinification of haircare. Serums, exfoliants, SPF for the scalp going mainstream." },
+  { id: 8, name: "Azelaic acid", cat: "skincare", status: "rising", sources: ["Google Trends", "Reddit"], score: 71, added: "4 days ago", notes: "49% increase in demand over last year. 165K+ monthly searches." },
+];
+
+let trends = JSON.parse(localStorage.getItem('beauty_trends') || 'null') || [...SEEDS];
+let activeCat = 'all';
+let nextId = Math.max(...trends.map(t => t.id)) + 1;
+
+function save() { localStorage.setItem('beauty_trends', JSON.stringify(trends)); }
+
+function statusColor(s) {
+  return { hot: '#D85A30', rising: '#639922', stable: '#378ADD', new: '#7F77DD' }[s] || '#888780';
+}
+
+function miniSparkline(score, status) {
+  const pts = Array.from({length: 8}, (_, i) => Math.max(10, Math.min(95, score - 20 + i * 4 + (Math.random()*8-4))));
+  const max = Math.max(...pts), min = Math.min(...pts);
+  const norm = pts.map(p => 35 - ((p - min) / (max - min + 1)) * 30);
+  const col = statusColor(status);
+  return `<svg viewBox="0 0 120 40" width="100%" height="40" preserveAspectRatio="none"><polyline points="${pts.map((p,i)=>`${Math.round(i*(120/7))},${Math.round(norm[i])}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function badgeClass(s) {
+  return { hot: 'badge-hot', rising: 'badge-rising', stable: 'badge-stable', new: 'badge-new' }[s] || 'badge-stable';
+}
+
+function filterCat(cat, el) {
+  activeCat = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTrends();
+}
+
+function renderTrends() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  let filtered = trends.filter(t => {
+    const catMatch = activeCat === 'all' || t.cat === activeCat;
+    const searchMatch = !q || t.name.toLowerCase().includes(q) || (t.notes||'').toLowerCase().includes(q);
+    return catMatch && searchMatch;
+  });
+
+  document.getElementById('stat-total').textContent = trends.length;
+  document.getElementById('stat-hot').textContent = trends.filter(t => t.status === 'hot').length;
+  document.getElementById('stat-new').textContent = trends.filter(t => t.status === 'new').length;
+
+  const grid = document.getElementById('trends-grid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column: 1/-1">No trends found. Add one above.</div>';
+    return;
+  }
+  grid.innerHTML = filtered.sort((a,b) => b.score - a.score).map(t => `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">${t.name}</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge ${badgeClass(t.status)}">${t.status}</span>
+          <button class="remove-btn" onclick="removeTrend(${t.id})">×</button>
+        </div>
+      </div>
+      <div class="sources">${t.sources.map(s=>`<span class="source-tag">${s}</span>`).join('')}</div>
+      <div class="spark">${miniSparkline(t.score, t.status)}</div>
+      <div class="trend-bar"><div class="trend-bar-fill" style="width:${t.score}%;background:${statusColor(t.status)};"></div></div>
+      ${t.notes ? `<p style="font-size:12px;color:#666;margin:6px 0 8px;line-height:1.5;">${t.notes}</p>` : ''}
+      <div class="card-meta"><span>${t.cat}</span><span>Added ${t.added}</span></div>
+    </div>
+  `).join('');
+}
+
+function addTrend() {
+  const name = document.getElementById('trend-name').value.trim();
+  if (!name) return;
+  const cat = document.getElementById('trend-cat').value;
+  const status = document.getElementById('trend-status').value;
+  const srcEl = document.getElementById('trend-source');
+  const sources = Array.from(srcEl.selectedOptions).map(o => o.value);
+  const notes = document.getElementById('trend-notes').value.trim();
+  const t = { id: nextId++, name, cat, status, sources: sources.length ? sources : ['Manual'], score: Math.round(40 + Math.random()*40), added: 'Just now', notes };
+  trends.unshift(t);
+  save();
+  document.getElementById('trend-name').value = '';
+  document.getElementById('trend-notes').value = '';
+  renderTrends();
+}
+
+function removeTrend(id) {
+  trends = trends.filter(t => t.id !== id);
+  save();
+  renderTrends();
+}
+
+renderTrends();
+</script>
+</body>
+</html>
